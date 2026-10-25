@@ -2,7 +2,7 @@
 
 const express = require('express');
 const http = require('http');
-const io { server } = require('socet.io');
+const { Server } = require('socket.io');
 
 const app = express();
 const server = http.createServer(app);
