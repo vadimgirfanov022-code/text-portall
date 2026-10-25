@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Эфемерный текстовый портал</title>
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    <style>
+        body { font-family: sans-serif; max-width: 600px; margin: 40px auto; padding: 0 20px; }
+        textarea { width: 100%; box-sizing: border-box; }
+        .status { font-weight: bold; color: gray; margin-bottom: 10px; }
+        .connected { color: green; }
+    </style>
+</head>
+<body>
+    <h2>текстовый портал</h2>
+
+    <!-- Подключение -->
+    <div>
+        <input type="text" id="roomId" placeholder="Код комнаты...">
+        <button onclick="joinRoom()">Подключится</button>
+    <div id="status" class="status">Статус: не в комнате</div>
+    </div>
+
+    <hr>
+
+    <!--отправка-->
+    <div>
+        <textarea id="textInput" rows="5" placeholder="Введите текст для отпраки..."></textarea><br>
+        <button onclick="sendText()" style="margin-top: 10px;">Отправить на другое устройство</button>
+    </div>
+
+    <h3>Принятый текст:</h3>
+    <div id="output" style="padding: 10px; background: #f4f4f4; min-height: 50px; border-radius: 4px; word-break: break-all;"></div>
+
+    <script>
+        const socket = io('http://192.168.3.11:3000');
+        let currentRoom = '';
+
+        function joinRoom() {
+            const room = document.getElementById('roomId').value.trim();
+            if (room) {
+                correntRoom = room;
+                socket.emit('join-room', room);
+                document.getElementById('status').innerText = `статус: в комнате ${room} (ожидание второго устройства...)`;
+            }
+        }
+        
+        function sendText() {
+            const text = document.getElementById('textInput').value;
+            if (currentRoom && text) {
+                socket.emit('send-text', { roomId: currentRoom, text: text });
+            } else {
+                alert('Сначала подключись к комнате и введи текст!');
+            }
+        }
+        
+        // события от сервера
+        socket.on('peer-connected', () => {
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = 'Статус: второе устройство подключено! Связь установлена.';
+            statusEl.classList.add('connected');    
+        });
+
+        socket.on('receive-text', (text) => {
+            document.getElementById('output').innerText = text;
+        });
+    </script>
+</body>
+</html>
